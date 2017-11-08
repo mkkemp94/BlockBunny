@@ -7,6 +7,11 @@ import com.mygdx.blockbunny.BlockBunny;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
+
+		config.title = BlockBunny.TITLE;
+		config.width = BlockBunny.V_WIDTH * BlockBunny.SCALE;
+		config.height = BlockBunny.V_HEIGHT * BlockBunny.SCALE;
+
 		new LwjglApplication(new BlockBunny(), config);
 	}
 }
