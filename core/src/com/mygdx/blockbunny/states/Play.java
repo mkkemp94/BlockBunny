@@ -14,6 +14,7 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.mygdx.blockbunny.Game;
 import com.mygdx.blockbunny.handlers.B2DVars;
 import com.mygdx.blockbunny.handlers.GameStateManager;
+import com.mygdx.blockbunny.handlers.MyContactListener;
 
 import static com.mygdx.blockbunny.handlers.B2DVars.PPM;
 
@@ -33,6 +34,7 @@ public class Play extends GameState {
         super(gsm);
 
         world = new World(new Vector2(0, -0.81f), true);
+        world.setContactListener(new MyContactListener());
         b2dr = new Box2DDebugRenderer();
 
         // Create platform
@@ -47,7 +49,7 @@ public class Play extends GameState {
         fixtureDef.shape = shape;
         fixtureDef.filter.categoryBits = B2DVars.BIT_GROUND;
         fixtureDef.filter.maskBits = B2DVars.BIT_BOX | B2DVars.BIT_BALL;
-        body.createFixture(fixtureDef);
+        body.createFixture(fixtureDef).setUserData("ground");
 
         // Create falling box
         bodyDef.position.set(160 / PPM, 200 / PPM);
@@ -58,7 +60,7 @@ public class Play extends GameState {
         fixtureDef.shape = shape;
         fixtureDef.filter.categoryBits = B2DVars.BIT_BOX;
         fixtureDef.filter.maskBits = B2DVars.BIT_GROUND;
-        body.createFixture(fixtureDef);
+        body.createFixture(fixtureDef).setUserData("box");
 
         // Create ball
         bodyDef.position.set(168 / PPM, 220 / PPM);
@@ -71,7 +73,7 @@ public class Play extends GameState {
         fixtureDef.restitution = 0.5f;
         fixtureDef.filter.categoryBits = B2DVars.BIT_BALL;
         fixtureDef.filter.maskBits = B2DVars.BIT_GROUND;
-        body.createFixture(fixtureDef);
+        body.createFixture(fixtureDef).setUserData("ball");
 
         // Set up box2d cam
         b2dCam = new OrthographicCamera();
