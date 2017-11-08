@@ -15,6 +15,7 @@ import com.mygdx.blockbunny.Game;
 import com.mygdx.blockbunny.handlers.B2DVars;
 import com.mygdx.blockbunny.handlers.GameStateManager;
 import com.mygdx.blockbunny.handlers.MyContactListener;
+import com.mygdx.blockbunny.handlers.MyInput;
 
 import static com.mygdx.blockbunny.handlers.B2DVars.PPM;
 
@@ -83,19 +84,28 @@ public class Play extends GameState {
     @Override
     public void handleInput() {
 
+        if (MyInput.isPressed(MyInput.BUTTON1)) {
+            System.out.println("Pressed Z");
+        }
+        if (MyInput.isDown(MyInput.BUTTON2)) {
+            System.out.println("Hold X");
+        }
     }
 
     @Override
     public void update(float dt) {
 
-        // Clear screen
-        Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        handleInput();
 
         world.step(dt, 6, 2);
     }
 
     @Override
     public void render() {
+
+        // Clear screen
+        Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
         b2dr.render(world, b2dCam.combined);
     }
 

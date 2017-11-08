@@ -5,6 +5,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.mygdx.blockbunny.handlers.GameStateManager;
+import com.mygdx.blockbunny.handlers.MyInput;
+import com.mygdx.blockbunny.handlers.MyInputProcessor;
 
 /**
  * This is the Game class.
@@ -28,6 +30,8 @@ public class Game extends ApplicationAdapter {
 	@Override
 	public void create () {
 
+		Gdx.input.setInputProcessor(new MyInputProcessor());
+
 		sb = new SpriteBatch();
 		cam = new OrthographicCamera();
 		cam.setToOrtho(false, V_WIDTH, V_HEIGHT);
@@ -46,6 +50,7 @@ public class Game extends ApplicationAdapter {
 			accum -= STEP;
 			gsm.update(STEP);
 			gsm.render();
+			MyInput.update();
 		}
 	}
 	
