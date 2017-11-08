@@ -7,10 +7,12 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.mygdx.blockbunny.Game;
+import com.mygdx.blockbunny.handlers.B2DVars;
 import com.mygdx.blockbunny.handlers.GameStateManager;
 
 import static com.mygdx.blockbunny.handlers.B2DVars.PPM;
@@ -30,7 +32,7 @@ public class Play extends GameState {
 
         super(gsm);
 
-        world = new World(new Vector2(0, -9.81f), true);
+        world = new World(new Vector2(0, -0.81f), true);
         b2dr = new Box2DDebugRenderer();
 
         // Create platform
@@ -43,6 +45,8 @@ public class Play extends GameState {
         shape.setAsBox(50 / PPM, 5 / PPM);
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
+        fixtureDef.filter.categoryBits = B2DVars.BIT_GROUND;
+        fixtureDef.filter.maskBits = B2DVars.BIT_BOX | B2DVars.BIT_BALL;
         body.createFixture(fixtureDef);
 
         // Create falling box
@@ -52,7 +56,21 @@ public class Play extends GameState {
 
         shape.setAsBox(5 / PPM, 5 / PPM);
         fixtureDef.shape = shape;
-        //fixtureDef.restitution = 1f;
+        fixtureDef.filter.categoryBits = B2DVars.BIT_BOX;
+        fixtureDef.filter.maskBits = B2DVars.BIT_GROUND;
+        body.createFixture(fixtureDef);
+
+        // Create ball
+        bodyDef.position.set(168 / PPM, 220 / PPM);
+        bodyDef.type = BodyDef.BodyType.DynamicBody;
+        body = world.createBody(bodyDef);
+
+        CircleShape circleShape = new CircleShape();
+        circleShape.setRadius(5f / PPM);
+        fixtureDef.shape = circleShape;
+        fixtureDef.restitution = 0.5f;
+        fixtureDef.filter.categoryBits = B2DVars.BIT_BALL;
+        fixtureDef.filter.maskBits = B2DVars.BIT_GROUND;
         body.createFixture(fixtureDef);
 
         // Set up box2d cam
