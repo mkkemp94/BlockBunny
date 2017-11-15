@@ -7,7 +7,6 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
-import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
@@ -30,12 +29,17 @@ public class Play extends GameState {
 
     private OrthographicCamera b2dCam;
 
+    private Body playerBody;
+
+    private MyContactListener cl;
+
     public Play(GameStateManager gsm) {
 
         super(gsm);
 
-        world = new World(new Vector2(0, -0.81f), true);
-        world.setContactListener(new MyContactListener());
+        world = new World(new Vector2(0, -9.81f), true);
+        cl = new MyContactListener();
+        world.setContactListener(cl);
         b2dr = new Box2DDebugRenderer();
 
         // Create platform
@@ -49,32 +53,27 @@ public class Play extends GameState {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
         fixtureDef.filter.categoryBits = B2DVars.BIT_GROUND;
-        fixtureDef.filter.maskBits = B2DVars.BIT_BOX | B2DVars.BIT_BALL;
+        fixtureDef.filter.maskBits = B2DVars.BIT_PLAYER;
         body.createFixture(fixtureDef).setUserData("ground");
 
-        // Create falling box
+        // Create player
         bodyDef.position.set(160 / PPM, 200 / PPM);
         bodyDef.type = BodyDef.BodyType.DynamicBody;
-        body = world.createBody(bodyDef);
+        playerBody = world.createBody(bodyDef);
 
         shape.setAsBox(5 / PPM, 5 / PPM);
         fixtureDef.shape = shape;
-        fixtureDef.filter.categoryBits = B2DVars.BIT_BOX;
+        fixtureDef.filter.categoryBits = B2DVars.BIT_PLAYER;
         fixtureDef.filter.maskBits = B2DVars.BIT_GROUND;
-        body.createFixture(fixtureDef).setUserData("box");
+        playerBody.createFixture(fixtureDef).setUserData("player");
 
-        // Create ball
-        bodyDef.position.set(168 / PPM, 220 / PPM);
-        bodyDef.type = BodyDef.BodyType.DynamicBody;
-        body = world.createBody(bodyDef);
-
-        CircleShape circleShape = new CircleShape();
-        circleShape.setRadius(5f / PPM);
-        fixtureDef.shape = circleShape;
-        fixtureDef.restitution = 0.5f;
-        fixtureDef.filter.categoryBits = B2DVars.BIT_BALL;
+        // create foot sensor
+        shape.setAsBox(2 / PPM, 2 / PPM, new Vector2(0, -5 / PPM), 0);
+        fixtureDef.shape = shape;
+        fixtureDef.filter.categoryBits = B2DVars.BIT_PLAYER;
         fixtureDef.filter.maskBits = B2DVars.BIT_GROUND;
-        body.createFixture(fixtureDef).setUserData("ball");
+        fixtureDef.isSensor = true;
+        playerBody.createFixture(fixtureDef).setUserData("foot");
 
         // Set up box2d cam
         b2dCam = new OrthographicCamera();
@@ -84,11 +83,11 @@ public class Play extends GameState {
     @Override
     public void handleInput() {
 
+        // player jump
         if (MyInput.isPressed(MyInput.BUTTON1)) {
-            System.out.println("Pressed Z");
-        }
-        if (MyInput.isDown(MyInput.BUTTON2)) {
-            System.out.println("Hold X");
+            if (cl.isPlayerOnGround()) {
+                playerBody.applyForceToCenter(0, 200, true);
+            }
         }
     }
 
