@@ -4,6 +4,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.mygdx.blockbunny.handlers.Content;
 import com.mygdx.blockbunny.handlers.GameStateManager;
 import com.mygdx.blockbunny.handlers.MyInput;
 import com.mygdx.blockbunny.handlers.MyInputProcessor;
@@ -27,10 +28,15 @@ public class Game extends ApplicationAdapter {
 
 	private GameStateManager gsm;
 
+	public static Content resources;
+
 	@Override
 	public void create () {
 
 		Gdx.input.setInputProcessor(new MyInputProcessor());
+
+		resources = new Content();
+		resources.loadTexture("res/images/bunny", "bunny");
 
 		sb = new SpriteBatch();
 		cam = new OrthographicCamera();

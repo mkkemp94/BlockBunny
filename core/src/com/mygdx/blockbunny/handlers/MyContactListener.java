@@ -12,7 +12,7 @@ import com.badlogic.gdx.physics.box2d.Manifold;
 
 public class MyContactListener implements ContactListener {
 
-    private boolean playerOnGround;
+    private int numFootContacts;
 
     @Override
     public void beginContact(Contact contact) {
@@ -22,12 +22,12 @@ public class MyContactListener implements ContactListener {
 
         if (a.getUserData() != null && a.getUserData().equals("foot")) {
             System.out.println("a is foot");
-            playerOnGround = true;
+            numFootContacts++;
         }
 
         if (b.getUserData() != null && b.getUserData().equals("foot")) {
             System.out.println("b is foot");
-            playerOnGround = true;
+            numFootContacts++;
         }
 
         System.out.println(a.getUserData() + ", " + b.getUserData());
@@ -42,17 +42,17 @@ public class MyContactListener implements ContactListener {
 
         if (a.getUserData() != null && a.getUserData().equals("foot")) {
             System.out.println("a is foot");
-            playerOnGround = false;
+            numFootContacts--;
         }
 
         if (b.getUserData() != null && b.getUserData().equals("foot")) {
             System.out.println("b is foot");
-            playerOnGround = false;
+            numFootContacts--;
         }
     }
 
     public boolean isPlayerOnGround() {
-        return playerOnGround;
+        return numFootContacts > 0;
     }
 
     @Override
