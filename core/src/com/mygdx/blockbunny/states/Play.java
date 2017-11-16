@@ -4,12 +4,14 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.ChainShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
@@ -42,6 +44,8 @@ public class Play extends GameState {
     private TiledMap tiledMap;
     private OrthogonalTiledMapRenderer tiledMapRenderer;
 
+    private float tileSize;
+
     public Play(GameStateManager gsm) {
         super(gsm);
 
@@ -50,19 +54,9 @@ public class Play extends GameState {
         world.setContactListener(contactListener);
         b2dr = new Box2DDebugRenderer();
 
-        // Create platform
         BodyDef bodyDef = new BodyDef();
-        bodyDef.position.set(160 / PPM, 120 / PPM);
-        bodyDef.type = BodyDef.BodyType.StaticBody;
-        Body body = world.createBody(bodyDef);
-
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(50 / PPM, 5 / PPM);
         FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = shape;
-        fixtureDef.filter.categoryBits = B2DVars.BIT_GROUND;
-        fixtureDef.filter.maskBits = B2DVars.BIT_PLAYER;
-        body.createFixture(fixtureDef).setUserData("ground");
+        PolygonShape shape = new PolygonShape();
 
         // Create player
         bodyDef.position.set(160 / PPM, 200 / PPM);
@@ -72,14 +66,14 @@ public class Play extends GameState {
         shape.setAsBox(5 / PPM, 5 / PPM);
         fixtureDef.shape = shape;
         fixtureDef.filter.categoryBits = B2DVars.BIT_PLAYER;
-        fixtureDef.filter.maskBits = B2DVars.BIT_GROUND;
+        fixtureDef.filter.maskBits = B2DVars.BIT_RED;
         playerBody.createFixture(fixtureDef).setUserData("player");
 
         // create foot sensor
         shape.setAsBox(2 / PPM, 2 / PPM, new Vector2(0, -5 / PPM), 0);
         fixtureDef.shape = shape;
         fixtureDef.filter.categoryBits = B2DVars.BIT_PLAYER;
-        fixtureDef.filter.maskBits = B2DVars.BIT_GROUND;
+        fixtureDef.filter.maskBits = B2DVars.BIT_RED;
         fixtureDef.isSensor = true;
         playerBody.createFixture(fixtureDef).setUserData("foot");
 
@@ -93,6 +87,60 @@ public class Play extends GameState {
         // Load map
         tiledMap = new TmxMapLoader().load("res/maps/untitled.tmx");
         tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
+
+        TiledMapTileLayer layer = (TiledMapTileLayer) tiledMap.getLayers().get("red");
+        tileSize = layer.getTileHeight();
+
+        // Go through all cells in layer.
+        for( int row = 0; row < layer.getHeight(); row++) {
+            for (int col = 0; col < layer.getWidth(); col++) {
+
+                // Get cell
+                TiledMapTileLayer.Cell cell = layer.getCell(col, row);
+
+                // Check if cell exist
+                if (cell == null) continue;
+                if (cell.getTile() == null) continue;
+
+                // Create body and fixture from cell.
+                bodyDef.type = BodyDef.BodyType.StaticBody;
+                bodyDef.position.set(
+                        (col + 0.5f) * tileSize / PPM,
+                        (row + 0.5f) * tileSize / PPM
+                );
+
+                ChainShape chainShape = new ChainShape();
+                Vector2[] v = new Vector2[3];
+
+                // Bottom left corner
+                v[0] = new Vector2(
+                        -tileSize / 2 / PPM,
+                        -tileSize / 2 / PPM
+                );
+
+                // Top left corner
+                v[1] = new Vector2(
+                        -tileSize / 2 / PPM,
+                        tileSize / 2 / PPM
+                );
+
+                // Top right corner
+                v[2] = new Vector2(
+                        tileSize / 2 / PPM,
+                        tileSize / 2 / PPM
+                );
+
+                chainShape.createChain(v);
+                fixtureDef.friction = 0;
+                fixtureDef.shape = chainShape;
+                fixtureDef.filter.categoryBits = B2DVars.BIT_RED;
+                fixtureDef.filter.maskBits = B2DVars.BIT_PLAYER;
+                fixtureDef.isSensor = false;
+
+                world.createBody(bodyDef).createFixture(fixtureDef);
+            }
+        }
+
     }
 
     @Override
