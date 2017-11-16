@@ -36,7 +36,7 @@ public class Game extends ApplicationAdapter {
 		Gdx.input.setInputProcessor(new MyInputProcessor());
 
 		resources = new Content();
-		resources.loadTexture("res/images/bunny", "bunny");
+		resources.loadTexture("res/images/bunny.png", "bunny");
 
 		sb = new SpriteBatch();
 		cam = new OrthographicCamera();
