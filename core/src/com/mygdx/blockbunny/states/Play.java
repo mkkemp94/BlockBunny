@@ -3,6 +3,9 @@ package com.mygdx.blockbunny.states;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -24,22 +27,27 @@ import static com.mygdx.blockbunny.handlers.B2DVars.PPM;
 
 public class Play extends GameState {
 
+    // The World
     private World world;
-    private Box2DDebugRenderer b2dr;
+    private MyContactListener contactListener;
 
+    // Box 2D
+    private Box2DDebugRenderer b2dr;
     private OrthographicCamera b2dCam;
 
+    // My Player
     private Body playerBody;
 
-    private MyContactListener cl;
+    // Map
+    private TiledMap tiledMap;
+    private OrthogonalTiledMapRenderer tiledMapRenderer;
 
     public Play(GameStateManager gsm) {
-
         super(gsm);
 
         world = new World(new Vector2(0, -9.81f), true);
-        cl = new MyContactListener();
-        world.setContactListener(cl);
+        contactListener = new MyContactListener();
+        world.setContactListener(contactListener);
         b2dr = new Box2DDebugRenderer();
 
         // Create platform
@@ -78,14 +86,21 @@ public class Play extends GameState {
         // Set up box2d cam
         b2dCam = new OrthographicCamera();
         b2dCam.setToOrtho(false, Game.V_WIDTH / PPM, Game.V_HEIGHT / PPM);
+
+        ///////////////////////////////////////
+        // Tiled
+
+        // Load map
+        tiledMap = new TmxMapLoader().load("res/maps/untitled.tmx");
+        tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
     }
 
     @Override
     public void handleInput() {
 
-        // player jump
+        // Player Jump
         if (MyInput.isPressed(MyInput.BUTTON1)) {
-            if (cl.isPlayerOnGround()) {
+            if (contactListener.isPlayerOnGround()) {
                 playerBody.applyForceToCenter(0, 200, true);
             }
         }
@@ -95,7 +110,6 @@ public class Play extends GameState {
     public void update(float dt) {
 
         handleInput();
-
         world.step(dt, 6, 2);
     }
 
@@ -105,6 +119,11 @@ public class Play extends GameState {
         // Clear screen
         Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // Draw tiled map
+        tiledMapRenderer.setView(cam);
+        tiledMapRenderer.render();
+
+        // Debug renderer
         b2dr.render(world, b2dCam.combined);
     }
 
