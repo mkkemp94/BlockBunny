@@ -16,6 +16,7 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.mygdx.blockbunny.Game;
+import com.mygdx.blockbunny.entities.Player;
 import com.mygdx.blockbunny.handlers.B2DVars;
 import com.mygdx.blockbunny.handlers.GameStateManager;
 import com.mygdx.blockbunny.handlers.MyContactListener;
@@ -38,7 +39,7 @@ public class Play extends GameState {
     private OrthographicCamera b2dCam;
 
     // My Player
-    private Body playerBody;
+    private Player player;
 
     // Map
     private TiledMap tiledMap;
@@ -61,15 +62,9 @@ public class Play extends GameState {
         // Create Tiles
         createTiles();
 
-
-
         // Set up box2d cam
         b2dCam = new OrthographicCamera();
         b2dCam.setToOrtho(false, Game.V_WIDTH / PPM, Game.V_HEIGHT / PPM);
-
-
-
-
 
     }
 
@@ -79,7 +74,7 @@ public class Play extends GameState {
         // Player Jump
         if (MyInput.isPressed(MyInput.BUTTON1)) {
             if (contactListener.isPlayerOnGround()) {
-                playerBody.applyForceToCenter(0, 200, true);
+                player.getBody().applyForceToCenter(0, 200, true);
             }
         }
     }
@@ -89,6 +84,9 @@ public class Play extends GameState {
 
         handleInput();
         world.step(dt, 6, 2);
+
+        // Update player
+        player.update(dt);
     }
 
     @Override
@@ -100,6 +98,10 @@ public class Play extends GameState {
         // Draw tiled map
         tiledMapRenderer.setView(cam);
         tiledMapRenderer.render();
+
+        // Draw player
+        sb.setProjectionMatrix(cam.combined);
+        player.render(sb);
 
         // Debug renderer
         b2dr.render(world, b2dCam.combined);
@@ -114,25 +116,32 @@ public class Play extends GameState {
         // Create Player
         BodyDef bodyDef = new BodyDef();
         bodyDef.position.set(160 / PPM, 200 / PPM);
+        bodyDef.linearVelocity.set(1, 0);
         bodyDef.type = BodyDef.BodyType.DynamicBody;
-        playerBody = world.createBody(bodyDef);
+        Body body = world.createBody(bodyDef);
 
         PolygonShape shape = new PolygonShape();
-        shape.setAsBox(5 / PPM, 5 / PPM);
+        shape.setAsBox(13 / PPM, 13 / PPM);
 
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
         fixtureDef.filter.categoryBits = B2DVars.BIT_PLAYER;
         fixtureDef.filter.maskBits = B2DVars.BIT_RED;
-        playerBody.createFixture(fixtureDef).setUserData("player");
+        body.createFixture(fixtureDef).setUserData("player");
 
         // Create Foot Sensor
-        shape.setAsBox(2 / PPM, 2 / PPM, new Vector2(0, -5 / PPM), 0);
+        shape.setAsBox(13 / PPM, 2 / PPM, new Vector2(0, -13 / PPM), 0);
         fixtureDef.shape = shape;
         fixtureDef.filter.categoryBits = B2DVars.BIT_PLAYER;
         fixtureDef.filter.maskBits = B2DVars.BIT_RED;
         fixtureDef.isSensor = true;
-        playerBody.createFixture(fixtureDef).setUserData("foot");
+        body.createFixture(fixtureDef).setUserData("foot");
+
+        // Create Player
+        player = new Player(body);
+
+        // Circular reference
+        body.setUserData(player);
     }
 
     private void createTiles() {
@@ -200,7 +209,7 @@ public class Play extends GameState {
                 chainShape.createChain(v);
                 fixtureDef.friction = 0;
                 fixtureDef.shape = chainShape;
-                fixtureDef.filter.categoryBits = B2DVars.BIT_RED;
+                fixtureDef.filter.categoryBits = bits;
                 fixtureDef.filter.maskBits = B2DVars.BIT_PLAYER;
                 fixtureDef.isSensor = false;
 
