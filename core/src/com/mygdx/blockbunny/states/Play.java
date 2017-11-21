@@ -86,7 +86,7 @@ public class Play extends GameState {
         // Player Jump
         if (MyInput.isPressed(MyInput.BUTTON1)) {
             if (contactListener.isPlayerOnGround()) {
-                player.getBody().applyForceToCenter(0, 200, true);
+                player.getBody().applyForceToCenter(0, 250, true);
             }
         }
     }
@@ -95,7 +95,19 @@ public class Play extends GameState {
     public void update(float dt) {
 
         handleInput();
+
+        // Update the world
         world.step(dt, 6, 2);
+
+        // Remove crystals from the box 2d world, now that the world has finished updating.
+        Array<Body> bodies = contactListener.getBodiesToRemove();
+        for (int i = 0; i < bodies.size; i++) {
+            Body b = bodies.get(i);
+            crystals.removeValue((Crystal) b.getUserData(), true);
+            world.destroyBody(b);
+            player.collectCrystal();
+        }
+        bodies.clear();
 
         // Update player
         player.update(dt);
@@ -139,8 +151,8 @@ public class Play extends GameState {
     private void createPlayer() {
         // Create Player
         BodyDef bodyDef = new BodyDef();
-        bodyDef.position.set(160 / PPM, 200 / PPM);
-        bodyDef.linearVelocity.set(1, 0);
+        bodyDef.position.set(100 / PPM, 200 / PPM);
+        bodyDef.linearVelocity.set(0.1f, 0);
         bodyDef.type = BodyDef.BodyType.DynamicBody;
         Body body = world.createBody(bodyDef);
 
@@ -150,7 +162,7 @@ public class Play extends GameState {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
         fixtureDef.filter.categoryBits = B2DVars.BIT_PLAYER;
-        fixtureDef.filter.maskBits = B2DVars.BIT_RED;
+        fixtureDef.filter.maskBits = B2DVars.BIT_RED | B2DVars.BIT_CRYSTAL;
         body.createFixture(fixtureDef).setUserData("player");
 
         // Create Foot Sensor
@@ -272,7 +284,7 @@ public class Play extends GameState {
             fixtureDef.filter.maskBits = B2DVars.BIT_PLAYER;
 
             Body body = world.createBody(bodyDef);
-            body.createFixture(fixtureDef);
+            body.createFixture(fixtureDef).setUserData("crystal");
 
             Crystal c = new Crystal(body);
             crystals.add(c);
