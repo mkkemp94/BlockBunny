@@ -3,6 +3,8 @@ package com.mygdx.blockbunny.states;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -12,10 +14,13 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.ChainShape;
+import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.utils.Array;
 import com.mygdx.blockbunny.Game;
+import com.mygdx.blockbunny.entities.Crystal;
 import com.mygdx.blockbunny.entities.Player;
 import com.mygdx.blockbunny.handlers.B2DVars;
 import com.mygdx.blockbunny.handlers.GameStateManager;
@@ -30,6 +35,8 @@ import static com.mygdx.blockbunny.handlers.B2DVars.PPM;
 
 public class Play extends GameState {
 
+    private boolean debug = false;
+
     // The World
     private World world;
     private MyContactListener contactListener;
@@ -40,6 +47,8 @@ public class Play extends GameState {
 
     // My Player
     private Player player;
+
+    private Array<Crystal> crystals;
 
     // Map
     private TiledMap tiledMap;
@@ -61,6 +70,9 @@ public class Play extends GameState {
 
         // Create Tiles
         createTiles();
+
+        // Create Crystals
+        createCrystals();
 
         // Set up box2d cam
         b2dCam = new OrthographicCamera();
@@ -87,6 +99,11 @@ public class Play extends GameState {
 
         // Update player
         player.update(dt);
+
+        // Update crystals
+        for (int i = 0; i < crystals.size; i++) {
+            crystals.get(i).update(dt);
+        }
     }
 
     @Override
@@ -103,8 +120,15 @@ public class Play extends GameState {
         sb.setProjectionMatrix(cam.combined);
         player.render(sb);
 
-        // Debug renderer
-        b2dr.render(world, b2dCam.combined);
+        // Draw crystals
+        for (int i = 0; i < crystals.size; i++) {
+            crystals.get(i).render(sb);
+        }
+
+        if (debug) {
+            // Debug renderer
+            b2dr.render(world, b2dCam.combined);
+        }
     }
 
     @Override
@@ -215,6 +239,45 @@ public class Play extends GameState {
 
                 world.createBody(bodyDef).createFixture(fixtureDef);
             }
+        }
+    }
+
+    private void createCrystals() {
+        System.out.println("createCrystals");
+        crystals = new Array<Crystal>();
+
+        MapLayer layer = tiledMap.getLayers().get("crystals");
+
+        BodyDef bodyDef = new BodyDef();
+        FixtureDef fixtureDef = new FixtureDef();
+
+        for (MapObject mo : layer.getObjects()) {
+
+            bodyDef.type = BodyDef.BodyType.StaticBody;
+
+            float x = mo.getProperties().get("x", Float.class) / PPM;
+            float y = mo.getProperties().get("y", Float.class) / PPM;
+
+            System.out.println("crystal x " + x);
+            System.out.println("crystal y " + y);
+
+            bodyDef.position.set(x, y);
+
+            CircleShape shape = new CircleShape();
+            shape.setRadius(8f / PPM);
+
+            fixtureDef.shape = shape;
+            fixtureDef.isSensor = true;
+            fixtureDef.filter.categoryBits = B2DVars.BIT_CRYSTAL;
+            fixtureDef.filter.maskBits = B2DVars.BIT_PLAYER;
+
+            Body body = world.createBody(bodyDef);
+            body.createFixture(fixtureDef);
+
+            Crystal c = new Crystal(body);
+            crystals.add(c);
+
+            body.setUserData(c);
         }
     }
 }
