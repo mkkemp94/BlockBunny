@@ -92,7 +92,7 @@ public class Play extends GameState {
         // Player Jump
         if (MyInput.isPressed(MyInput.BUTTON1) || Gdx.input.justTouched()) {
             if (contactListener.isPlayerOnGround()) {
-                player.getBody().applyForceToCenter(0, 250, true);
+                player.getBody().applyForceToCenter(0, 300, true);
             }
         }
 
@@ -135,6 +135,14 @@ public class Play extends GameState {
         // Clear screen
         Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // Set camera to follow player
+        cam.position.set(
+                player.getPosition().x * PPM + Game.V_WIDTH / 4,
+                Game.V_HEIGHT / 2,
+                0
+        );
+        cam.update();
+
         // Draw tiled map
         tiledMapRenderer.setView(cam);
         tiledMapRenderer.render();
@@ -167,7 +175,7 @@ public class Play extends GameState {
         // Create Player
         BodyDef bodyDef = new BodyDef();
         bodyDef.position.set(100 / PPM, 200 / PPM);
-        bodyDef.linearVelocity.set(0.1f, 0);
+        bodyDef.linearVelocity.set(1f, 0);
         bodyDef.type = BodyDef.BodyType.DynamicBody;
         Body body = world.createBody(bodyDef);
 
