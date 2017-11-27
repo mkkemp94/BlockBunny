@@ -15,12 +15,14 @@ import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.ChainShape;
 import com.badlogic.gdx.physics.box2d.CircleShape;
+import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
 import com.mygdx.blockbunny.Game;
 import com.mygdx.blockbunny.entities.Crystal;
+import com.mygdx.blockbunny.entities.HUD;
 import com.mygdx.blockbunny.entities.Player;
 import com.mygdx.blockbunny.handlers.B2DVars;
 import com.mygdx.blockbunny.handlers.GameStateManager;
@@ -56,6 +58,8 @@ public class Play extends GameState {
 
     private int tileSize;
 
+    private HUD hud;
+
     public Play(GameStateManager gsm) {
         super(gsm);
 
@@ -78,16 +82,23 @@ public class Play extends GameState {
         b2dCam = new OrthographicCamera();
         b2dCam.setToOrtho(false, Game.V_WIDTH / PPM, Game.V_HEIGHT / PPM);
 
+        // Setup hud
+        hud = new HUD(player);
     }
 
     @Override
     public void handleInput() {
 
         // Player Jump
-        if (MyInput.isPressed(MyInput.BUTTON1)) {
+        if (MyInput.isPressed(MyInput.BUTTON1) || Gdx.input.justTouched()) {
             if (contactListener.isPlayerOnGround()) {
                 player.getBody().applyForceToCenter(0, 250, true);
             }
+        }
+
+        // Switch block color
+        if (MyInput.isPressed(MyInput.BUTTON2)) {
+            switchBlocks();
         }
     }
 
@@ -136,6 +147,10 @@ public class Play extends GameState {
         for (int i = 0; i < crystals.size; i++) {
             crystals.get(i).render(sb);
         }
+
+        // Draw HUD
+        sb.setProjectionMatrix(hudCam.combined);
+        hud.render(sb);
 
         if (debug) {
             // Debug renderer
@@ -291,5 +306,34 @@ public class Play extends GameState {
 
             body.setUserData(c);
         }
+    }
+
+    private void switchBlocks() {
+        Filter filter = player.getBody().getFixtureList().first().getFilterData();
+        short bits = filter.maskBits;
+
+        // Switch to next color (red > green > blue > red)
+        if ((bits & B2DVars.BIT_RED) != 0) {
+            bits &= ~B2DVars.BIT_RED;
+            bits |= B2DVars.BIT_GREEN;
+        }
+        else if ((bits & B2DVars.BIT_GREEN) != 0) {
+            bits &= ~B2DVars.BIT_GREEN;
+            bits |= B2DVars.BIT_BLUE;
+        }
+        else if ((bits & B2DVars.BIT_BLUE) != 0) {
+            bits &= ~B2DVars.BIT_BLUE;
+            bits |= B2DVars.BIT_RED;
+        }
+
+        // Set new mask bits
+        filter.maskBits = bits;
+        player.getBody().getFixtureList().first().setFilterData(filter);
+
+        // Set new mask bits for foot
+        filter = player.getBody().getFixtureList().get(1).getFilterData();
+        bits &= ~B2DVars.BIT_CRYSTAL;
+        filter.maskBits = bits;
+        player.getBody().getFixtureList().get(1).setFilterData(filter);
     }
 }
